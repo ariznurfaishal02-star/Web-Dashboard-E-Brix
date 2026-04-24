@@ -10,7 +10,7 @@ def create_ebrix_map(df):
         # 1. AMBIL ASET DARI GEE
         heatmap_ebk = ee.Image("projects/fabled-archive-491907-g3/assets/Heatmap_brix_variasi")
 
-        # 2. AMBIL CENTER DARI ASSET
+        # 2. AMBIL BOUNDS DARI ASSET
         bounds = heatmap_ebk.geometry().bounds().getInfo()
         coords = bounds['coordinates'][0]
         lats = [c[1] for c in coords]
@@ -28,29 +28,26 @@ def create_ebrix_map(df):
             control=True
         ).add_to(m)
 
-        # 4. TILE URL DARI GEE - TANPA serialize()
-        map_id_dict = heatmap_ebk.getMapId({
+        # 4. AMBIL GAMBAR STATIS DARI GEE
+        thumb_url = heatmap_ebk.getThumbURL({
             'min': 8.8,
             'max': 26,
-            'palette': ['#2ecc71', '#f39c12', '#e74c3c']
+            'palette': ['#2ecc71', '#f39c12', '#e74c3c'],
+            'region': bounds,
+            'dimensions': 1024,
+            'format': 'png'
         })
-        st.write(dict(map_id_dict))  # lihat isi lengkapnya
-        tile_url = "https://earthengine.googleapis.com/map/{mapid}/{{z}}/{{x}}/{{y}}?token={token}".format(
-            mapid=map_id_dict['mapid'],
-            token=map_id_dict['token']
-        )
 
-        folium.TileLayer(
-            tiles=tile_url,
-            attr="Google Earth Engine",
-            name="Heatmap EBK",
-            overlay=True,
-            control=True,
+        # 5. OVERLAY GAMBAR KE PETA
+        folium.raster_layers.ImageOverlay(
+            image=thumb_url,
+            bounds=[[min(lats), min(lons)], [max(lats), max(lons)]],
             opacity=0.8,
+            name="Heatmap EBK",
             show=True
         ).add_to(m)
 
-        # 5. LEGENDA
+        # 6. LEGENDA
         legend_html = """
         <div style="position: fixed; bottom: 30px; right: 10px; z-index: 1000;
                     background-color: white; padding: 10px; border-radius: 8px;
@@ -63,7 +60,7 @@ def create_ebrix_map(df):
         """
         m.get_root().html.add_child(folium.Element(legend_html))
 
-        # 6. TITIK SAMPEL
+        # 7. TITIK SAMPEL
         if not df.empty:
             for idx, row in df.iterrows():
                 if 'Latitude' in row and 'Longitude' in row:
