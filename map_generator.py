@@ -1,9 +1,11 @@
 import ee
 import folium
+import streamlit as st
 
 def create_ebrix_map(df):
     m = None
     error_msg = None
+
     try:
         # 1. PETA DASAR
         m = folium.Map(location=[-7.3, 108.2], zoom_start=15)
@@ -28,6 +30,9 @@ def create_ebrix_map(df):
         # 4. TILE URL DARI GEE
         map_id = heatmap_ebk.getMapId(brix_vis)
         tile_url = map_id['tile_fetcher'].url_format
+
+        # DEBUG - hapus setelah heatmap muncul
+        st.info(f"✅ GEE tile URL berhasil dibuat: {tile_url[:60]}...")
 
         folium.TileLayer(
             tiles=tile_url,
@@ -71,5 +76,7 @@ def create_ebrix_map(df):
 
     except Exception as e:
         error_msg = str(e)
+        # DEBUG
+        st.error(f"❌ Error di map_generator: {e}")
 
     return m, error_msg
