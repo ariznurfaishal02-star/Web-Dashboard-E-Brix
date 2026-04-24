@@ -9,11 +9,17 @@ from map_generator import create_ebrix_map
 import ui_component
 
 # 1. INISIALISASI & CONFIG
+import json
 try:
-    ee.Initialize(project='fabled-archive-491907-g3')
+    credentials = ee.ServiceAccountCredentials(
+        email=json.loads(st.secrets["gee"]["json"])["client_email"],
+        key_data=st.secrets["gee"]["json"]
+    )
+    ee.Initialize(credentials)
     gee_ready = True
-except Exception:
+except Exception as e:
     gee_ready = False
+    st.error(f"GEE gagal: {e}")
 
 st.set_page_config(page_title="E-BRIX Dashboard", page_icon="🍃", layout="wide")
 
