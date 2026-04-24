@@ -34,7 +34,7 @@ def create_ebrix_map(df):
             'max': 26,
             'palette': ['#2ecc71', '#f39c12', '#e74c3c']
         })
-
+        st.write(dict(map_id_dict))  # lihat isi lengkapnya
         tile_url = "https://earthengine.googleapis.com/map/{mapid}/{{z}}/{{x}}/{{y}}?token={token}".format(
             mapid=map_id_dict['mapid'],
             token=map_id_dict['token']
