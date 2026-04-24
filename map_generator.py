@@ -28,19 +28,11 @@ def create_ebrix_map(df):
             control=True
         ).add_to(m)
 
-        # 4. VISUALISASI - FORMAT URL LAMA DENGAN TOKEN
-        brix_vis = {
+        # 4. TILE URL DARI GEE - TANPA serialize()
+        map_id_dict = heatmap_ebk.getMapId({
             'min': 8.8,
             'max': 26,
             'palette': ['#2ecc71', '#f39c12', '#e74c3c']
-        }
-
-        map_id_dict = ee.data.getMapId({
-            'image': heatmap_ebk.serialize(),
-            'bands': '',
-            'min': 8.8,
-            'max': 26,
-            'palette': '2ecc71,f39c12,e74c3c'
         })
 
         tile_url = "https://earthengine.googleapis.com/map/{mapid}/{{z}}/{{x}}/{{y}}?token={token}".format(
