@@ -1,15 +1,24 @@
 import streamlit as st
 import os
 import ee
+import json
 from streamlit_folium import st_folium
-
-# Import modul terpisah
 from data_loader import load_data
 from map_generator import create_ebrix_map
 import ui_component
 
-# 1. INISIALISASI & CONFIG
-import json
+# 1. SET PAGE CONFIG DULU - HARUS PALING ATAS
+st.set_page_config(page_title="E-BRIX Dashboard", page_icon="🍃", layout="wide")
+
+# 2. CSS Loader
+current_dir = os.path.dirname(os.path.abspath(__file__))
+try:
+    with open(os.path.join(current_dir, "assets/style.css")) as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+except Exception:
+    st.warning("⚠️ File style.css tidak ada.")
+
+# 3. INISIALISASI GEE
 try:
     credentials = ee.ServiceAccountCredentials(
         email=json.loads(st.secrets["gee"]["json"])["client_email"],
@@ -21,34 +30,23 @@ except Exception as e:
     gee_ready = False
     st.error(f"GEE gagal: {e}")
 
-st.set_page_config(page_title="E-BRIX Dashboard", page_icon="🍃", layout="wide")
-
-# CSS Loader
-current_dir = os.path.dirname(os.path.abspath(__file__))
-try:
-    with open(os.path.join(current_dir, "assets/style.css")) as f:
-        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
-except Exception:
-    st.warning("⚠️ File style.css tidak ada.")
-
-# 2. LOAD DATA
+# 4. LOAD DATA
 df_raw = load_data()
 
-# 3. SIDEBAR & FILTERING
+# 5. SIDEBAR & FILTERING
 with st.sidebar:
     menu_pilihan, blok_dipilih, tgl_awal, tgl_akhir = ui_component.render_sidebar(df_raw)
 
-# Terapkan Filter
 df = df_raw.copy()
-if len(blok_dipilih) > 0: 
+if len(blok_dipilih) > 0:
     df = df[df['Kode_Blok'].isin(blok_dipilih)]
 if tgl_awal and tgl_akhir and not df.empty:
     df = df[(df['Tanggal'].dt.date >= tgl_awal) & (df['Tanggal'].dt.date <= tgl_akhir)]
 
-# 4. TAMPILKAN HEADER METRIK
+# 6. HEADER & METRIK
 ui_component.render_header_and_metrics(df)
 
-# 5. KONTEN UTAMA
+# 7. KONTEN UTAMA
 if menu_pilihan == "🟢 Dashboard Peta":
     with st.container(border=True):
         st.subheader("🗺️ Peta Kemanisan Tebu")
