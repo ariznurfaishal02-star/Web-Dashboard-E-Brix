@@ -1,21 +1,13 @@
 import ee
 import folium
-import json
-import streamlit as st
 
-# INISIALISASI GEE DENGAN SERVICE ACCOUNT
-try:
-    credentials = ee.ServiceAccountCredentials(
-        email=json.loads(st.secrets["gee"]["json"])["client_email"],
-        key_data=st.secrets["gee"]["json"]
-    )
-    ee.Initialize(credentials)
-except Exception as auth_error:
-    st.error(f"GEE Auth gagal: {auth_error}")
+def create_ebrix_map(df):
+    m = None
+    error_msg = None
+
     try:
-        # 1. PETA DASAR - Satelit dari Google via XYZ tile
+        # 1. PETA DASAR
         m = folium.Map(location=[-7.3, 108.2], zoom_start=15)
-
         folium.TileLayer(
             tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
             attr="Google Satellite",
@@ -34,10 +26,9 @@ except Exception as auth_error:
             'palette': ['#2ecc71', '#f39c12', '#e74c3c']
         }
 
-        # 4. DAPATKAN TILE URL DARI GEE
+        # 4. TILE URL DARI GEE
         map_id = heatmap_ebk.getMapId(brix_vis)
         tile_url = map_id['tile_fetcher'].url_format
-
         folium.TileLayer(
             tiles=tile_url,
             attr="Google Earth Engine",
@@ -46,7 +37,7 @@ except Exception as auth_error:
             control=True
         ).add_to(m)
 
-        # 5. LEGENDA MANUAL (HTML)
+        # 5. LEGENDA
         legend_html = """
         <div style="position: fixed; bottom: 30px; right: 10px; z-index: 1000;
                     background-color: white; padding: 10px; border-radius: 8px;
