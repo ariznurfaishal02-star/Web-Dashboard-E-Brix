@@ -1,6 +1,7 @@
 import ee
 import folium
 import streamlit as st
+from folium.plugins import Fullscreen
 
 def create_ebrix_map(df):
     m = None
@@ -74,6 +75,14 @@ def create_ebrix_map(df):
                         fill_opacity=0.7,
                         tooltip=f"Blok: {row.get('Kode_Blok', '-')} | Brix: {row.get('Nilai_Brix', 0)}°"
                     ).add_to(m)
+
+        # 8. TOMBOL FULLSCREEN
+        Fullscreen(
+            position="topleft",
+            title="Layar Penuh",
+            title_cancel="Keluar Layar Penuh",
+            force_separate_button=True
+        ).add_to(m)
 
         folium.LayerControl().add_to(m)
 
