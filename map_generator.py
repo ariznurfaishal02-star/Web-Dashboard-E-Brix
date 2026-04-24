@@ -4,7 +4,6 @@ import folium
 def create_ebrix_map(df):
     m = None
     error_msg = None
-
     try:
         # 1. PETA DASAR
         m = folium.Map(location=[-7.3, 108.2], zoom_start=15)
@@ -29,15 +28,16 @@ def create_ebrix_map(df):
         # 4. TILE URL DARI GEE
         map_id = heatmap_ebk.getMapId(brix_vis)
         tile_url = map_id['tile_fetcher'].url_format
+
         folium.TileLayer(
-    tiles=tile_url,
-    attr="Google Earth Engine",
-    name="Heatmap EBK",
-    overlay=True,
-    control=True,
-    opacity=0.8,
-    show=True
-).add_to(m)
+            tiles=tile_url,
+            attr="Google Earth Engine",
+            name="Heatmap EBK",
+            overlay=True,
+            control=True,
+            opacity=0.8,
+            show=True
+        ).add_to(m)
 
         # 5. LEGENDA
         legend_html = """
