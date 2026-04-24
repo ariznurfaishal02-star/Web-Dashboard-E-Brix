@@ -1,5 +1,17 @@
 import ee
 import folium
+import json
+import streamlit as st
+
+# INISIALISASI GEE DENGAN SERVICE ACCOUNT
+try:
+    credentials = ee.ServiceAccountCredentials(
+        email=json.loads(st.secrets["gee"]["json"])["client_email"],
+        key_data=st.secrets["gee"]["json"]
+    )
+    ee.Initialize(credentials)
+except Exception as auth_error:
+    pass
 
 def create_ebrix_map(df):
     m = None
