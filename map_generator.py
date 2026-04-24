@@ -7,8 +7,19 @@ def create_ebrix_map(df):
     error_msg = None
 
     try:
-        # 1. PETA DASAR
-        m = folium.Map(location=[-7.3, 108.2], zoom_start=15)
+        # 1. AMBIL ASET DARI GEE
+        heatmap_ebk = ee.Image("projects/fabled-archive-491907-g3/assets/Heatmap_brix_variasi")
+
+        # 2. AMBIL CENTER DARI ASSET
+        bounds = heatmap_ebk.geometry().bounds().getInfo()
+        coords = bounds['coordinates'][0]
+        lats = [c[1] for c in coords]
+        lons = [c[0] for c in coords]
+        center_lat = (min(lats) + max(lats)) / 2
+        center_lon = (min(lons) + max(lons)) / 2
+
+        # 3. PETA DASAR
+        m = folium.Map(location=[center_lat, center_lon], zoom_start=14)
         folium.TileLayer(
             tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
             attr="Google Satellite",
@@ -17,22 +28,25 @@ def create_ebrix_map(df):
             control=True
         ).add_to(m)
 
-        # 2. AMBIL ASET DARI GEE
-        heatmap_ebk = ee.Image("projects/fabled-archive-491907-g3/assets/Heatmap_brix_variasi")
-
-        # 3. VISUALISASI
+        # 4. VISUALISASI - FORMAT URL LAMA DENGAN TOKEN
         brix_vis = {
             'min': 8.8,
             'max': 26,
             'palette': ['#2ecc71', '#f39c12', '#e74c3c']
         }
 
-        # 4. TILE URL DARI GEE
-        map_id = heatmap_ebk.getMapId(brix_vis)
-        tile_url = map_id['tile_fetcher'].url_format
+        map_id_dict = ee.data.getMapId({
+            'image': heatmap_ebk.serialize(),
+            'bands': '',
+            'min': 8.8,
+            'max': 26,
+            'palette': '2ecc71,f39c12,e74c3c'
+        })
 
-        # DEBUG - hapus setelah heatmap muncul
-        st.info(f"✅ GEE tile URL berhasil dibuat: {tile_url[:60]}...")
+        tile_url = "https://earthengine.googleapis.com/map/{mapid}/{{z}}/{{x}}/{{y}}?token={token}".format(
+            mapid=map_id_dict['mapid'],
+            token=map_id_dict['token']
+        )
 
         folium.TileLayer(
             tiles=tile_url,
@@ -76,7 +90,6 @@ def create_ebrix_map(df):
 
     except Exception as e:
         error_msg = str(e)
-        # DEBUG
-        st.error(f"❌ Error di map_generator: {e}")
+        st.error(f"❌ Error: {e}")
 
     return m, error_msg
