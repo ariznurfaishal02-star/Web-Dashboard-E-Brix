@@ -1,7 +1,7 @@
 setuptools==69.5.1
 streamlit
 earthengine-api
-geemap
+geemap>=0.34.0
 xyzservices
 python-box==7.1.1
 folium
