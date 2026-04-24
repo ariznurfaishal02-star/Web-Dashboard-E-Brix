@@ -1,3 +1,4 @@
+setuptools
 streamlit
 earthengine-api
 geemap==0.32.1
