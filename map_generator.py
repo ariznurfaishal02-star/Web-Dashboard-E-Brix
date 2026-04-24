@@ -1,53 +1,60 @@
 import ee
-import geemap.foliumap as geemap
 import folium
 
 def create_ebrix_map(df):
-    """
-    Menghasilkan objek peta Folium yang berisi citra satelit dan 
-    overlay heatmap EBK dari Google Earth Engine.
-    """
     m = None
     error_msg = None
-    
-    try:
-        # 1. BUAT PETA DASAR
-        # Menggunakan geemap agar kompatibel dengan GEE
-        m = geemap.Map()
-        m.setOptions('SATELLITE') # Tampilan satelit
 
-        # 2. PANGGIL ASET DARI GEE
-        # Pastikan Asset ID ini sama persis dengan yang ada di GEE kamu
+    try:
+        # 1. PETA DASAR - Satelit dari Google via XYZ tile
+        m = folium.Map(location=[-7.3, 108.2], zoom_start=15)
+
+        folium.TileLayer(
+            tiles="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
+            attr="Google Satellite",
+            name="Satelit",
+            overlay=False,
+            control=True
+        ).add_to(m)
+
+        # 2. AMBIL ASET DARI GEE
         heatmap_ebk = ee.Image("projects/fabled-archive-491907-g3/assets/Heatmap_brix_variasi")
 
-        # 3. PENGATURAN VISUALISASI GRADASI WARNA
+        # 3. VISUALISASI
         brix_vis = {
             'min': 8.8,
             'max': 26,
-            'palette': ['#2ecc71', '#f39c12', '#e74c3c'] # Hijau -> Oranye -> Merah
+            'palette': ['#2ecc71', '#f39c12', '#e74c3c']
         }
 
-        # 4. TAMBAHKAN LAYER KE PETA
-        # Pusatkan kamera ke lokasi heatmap dengan zoom level 15
-        m.centerObject(heatmap_ebk, 15)
-        
-        # Tempelkan gambar heatmap di atas peta satelit
-        m.addLayer(heatmap_ebk, brix_vis, 'Heatmap EBK (ArcGIS)')
+        # 4. DAPATKAN TILE URL DARI GEE
+        map_id = heatmap_ebk.getMapId(brix_vis)
+        tile_url = map_id['tile_fetcher'].url_format
 
-        # 5. TAMBAHKAN LEGENDA
-        # geemap memiliki fungsi bawaan untuk membuat legenda interaktif
-        legend_dict = {
-            'Tinggi (> 19)': '#e74c3c',
-            'Sedang (14 - 18)': '#f39c12',
-            'Rendah (< 14)': '#2ecc71'
-        }
-        m.add_legend(title="Tingkat Kemanisan (Brix)", legend_dict=legend_dict, position='bottomright')
+        folium.TileLayer(
+            tiles=tile_url,
+            attr="Google Earth Engine",
+            name="Heatmap EBK",
+            overlay=True,
+            control=True
+        ).add_to(m)
 
-        # 6. TAMBAHKAN TITIK SAMPEL (Opsional)
-        # Jika df tidak kosong, tampilkan juga titik-titik sampel aslinya di atas heatmap
+        # 5. LEGENDA MANUAL (HTML)
+        legend_html = """
+        <div style="position: fixed; bottom: 30px; right: 10px; z-index: 1000;
+                    background-color: white; padding: 10px; border-radius: 8px;
+                    border: 1px solid #ccc; font-size: 13px;">
+            <b>Tingkat Kemanisan (Brix)</b><br>
+            <i style="background:#e74c3c;width:12px;height:12px;display:inline-block;margin-right:5px;"></i> Tinggi (&gt; 19)<br>
+            <i style="background:#f39c12;width:12px;height:12px;display:inline-block;margin-right:5px;"></i> Sedang (14 - 18)<br>
+            <i style="background:#2ecc71;width:12px;height:12px;display:inline-block;margin-right:5px;"></i> Rendah (&lt; 14)
+        </div>
+        """
+        m.get_root().html.add_child(folium.Element(legend_html))
+
+        # 6. TITIK SAMPEL
         if not df.empty:
             for idx, row in df.iterrows():
-                # Pastikan nama kolom 'Latitude' dan 'Longitude' sesuai dengan CSV/Database kamu
                 if 'Latitude' in row and 'Longitude' in row:
                     folium.CircleMarker(
                         location=[row['Latitude'], row['Longitude']],
@@ -60,9 +67,9 @@ def create_ebrix_map(df):
                         tooltip=f"Blok: {row.get('Kode_Blok', '-')} | Brix: {row.get('Nilai_Brix', 0)}°"
                     ).add_to(m)
 
+        folium.LayerControl().add_to(m)
+
     except Exception as e:
-        # Jika terjadi error saat memanggil GEE, tangkap pesan errornya
         error_msg = str(e)
 
-    # Kembalikan objek peta dan status error ke dashboard.py
     return m, error_msg
