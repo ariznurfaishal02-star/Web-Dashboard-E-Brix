@@ -11,12 +11,7 @@ try:
     )
     ee.Initialize(credentials)
 except Exception as auth_error:
-    pass
-
-def create_ebrix_map(df):
-    m = None
-    error_msg = None
-
+    st.error(f"GEE Auth gagal: {auth_error}")
     try:
         # 1. PETA DASAR - Satelit dari Google via XYZ tile
         m = folium.Map(location=[-7.3, 108.2], zoom_start=15)
