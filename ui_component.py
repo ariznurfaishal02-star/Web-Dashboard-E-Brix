@@ -21,26 +21,19 @@ def render_sidebar(df_raw):
     st.markdown('<p style="color:rgba(255,255,255,.3);font-size:9px;font-weight:700;">🔎 FILTER DATA</p>', unsafe_allow_html=True)
     
     semua_blok = sorted(df_raw['Kode_Blok'].dropna().unique().tolist()) if 'Kode_Blok' in df_raw.columns else []
-    
-    # 1. TAMBAHKAN KEY DI SINI
     blok_dipilih = st.multiselect("Blok Lahan", options=semua_blok, default=[], key="kunci_blok")
     
     tgl_awal, tgl_akhir = None, None
     if 'Tanggal' in df_raw.columns and not df_raw.empty:
         tgl_min = df_raw['Tanggal'].min().date()
         tgl_max = df_raw['Tanggal'].max().date()
-        
-        # 2. TAMBAHKAN KEY DI SINI JUGA
         tgl_awal = st.date_input("Dari Tanggal", value=tgl_min, key="kunci_tgl_awal")
         tgl_akhir = st.date_input("Sampai Tanggal", value=tgl_max, key="kunci_tgl_akhir")
     
-    # 3. LOGIKA RESET FILTER YANG MENGHAPUS MEMORI
     if st.button("✕  Reset Filter", use_container_width=True): 
-        # Hapus ingatan filter dari Streamlit
         for k in ['kunci_blok', 'kunci_tgl_awal', 'kunci_tgl_akhir']:
             if k in st.session_state:
                 del st.session_state[k]
-        # Refresh halaman
         st.rerun()
         
     return menu_pilihan, blok_dipilih, tgl_awal, tgl_akhir
@@ -66,7 +59,22 @@ def render_header_and_metrics(df):
 
 def render_analysis_charts(df):
     """Menampilkan grafik garis dan batang untuk menu Analisis Data"""
-    plotly_base = dict(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(l=0, r=0, t=10, b=0), height=240)
+    # #aaaaaa = abu-abu netral, untuk di bar chart agar angka tetap terlihat 
+    AXIS_COLOR = '#aaaaaa'
+
+    plotly_base = dict(
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        margin=dict(l=0, r=0, t=10, b=0),
+        height=240,
+        font=dict(color=AXIS_COLOR)
+    )
+    axis_style = dict(
+    tickfont=dict(color=AXIS_COLOR),
+    title_font=dict(color=AXIS_COLOR),
+    gridcolor='rgba(150,150,150,0.15)',
+    zerolinecolor='rgba(150,150,150,0.15)'
+)
     col_kiri, col_kanan = st.columns(2)
     
     with col_kiri:
@@ -76,6 +84,8 @@ def render_analysis_charts(df):
                 df_trend = df.groupby('Tanggal')['Nilai_Brix'].mean().reset_index()
                 fig_trend = px.line(df_trend, x='Tanggal', y='Nilai_Brix', markers=True, color_discrete_sequence=['#00b050'])
                 fig_trend.update_layout(**plotly_base)
+                fig_trend.update_xaxes(**axis_style)
+                fig_trend.update_yaxes(**axis_style)
                 st.plotly_chart(fig_trend, use_container_width=True)
             else:
                 st.info("📉 Data tidak tersedia.")
@@ -87,6 +97,8 @@ def render_analysis_charts(df):
                 df_status = df.groupby('Kode_Blok')['Nilai_Brix'].mean().reset_index().sort_values('Nilai_Brix', ascending=False)
                 fig_bar = px.bar(df_status, x='Kode_Blok', y='Nilai_Brix', color='Nilai_Brix', color_continuous_scale=['#2ecc71', '#f39c12', '#e74c3c'])
                 fig_bar.update_layout(**plotly_base, coloraxis_showscale=False)
+                fig_bar.update_xaxes(**axis_style)
+                fig_bar.update_yaxes(**axis_style)
                 st.plotly_chart(fig_bar, use_container_width=True)
             else:
                 st.info("📊 Data tidak tersedia.")
