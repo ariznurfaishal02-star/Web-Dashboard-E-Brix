@@ -51,7 +51,7 @@ def create_ebrix_map(df):
         # 6. LEGENDA
         legend_html = """
         <div style="position: fixed; bottom: 30px; right: 10px; z-index: 1000;
-                    background-color: white; padding: 10px; border-radius: 8px;
+                    background-color: white; color: black; padding: 10px; border-radius: 8px;
                     border: 1px solid #ccc; font-size: 13px;">
             <b>Tingkat Kemanisan (Brix)</b><br>
             <i style="background:#e74c3c;width:12px;height:12px;display:inline-block;margin-right:5px;"></i> Tinggi (&gt; 19)<br>
