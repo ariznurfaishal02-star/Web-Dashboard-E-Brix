@@ -6,7 +6,7 @@ import os
 def load_data():
     try:
         base_dir = os.path.dirname(os.path.abspath(__file__))
-        path = os.path.join(base_dir, "Data_eBrix_Variatif_Kategori.csv")
+        path = os.path.join(base_dir, "Data_eBrix__Tren_Naik.csv")
         df = pd.read_csv(path, sep=",", decimal=".")
     except FileNotFoundError:
         return pd.DataFrame(columns=['Tanggal', 'Kode_Blok', 'Latitude', 'Longitude', 'Nilai_Brix'])
