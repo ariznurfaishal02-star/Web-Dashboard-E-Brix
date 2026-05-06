@@ -9,9 +9,8 @@ def create_ebrix_map(df):
 
     try:
         # 1. AMBIL ASET DARI GEE
-        heatmap_ebk = ee.Image("projects/fabled-archive-491907-g3/assets/Heatmap_Brix/peta_1")
+        heatmap_ebk = ee.Image("projects/fabled-archive-491907-g3/assets/Heatmap_Brix/peta_01")
         heatmap_ebk = heatmap_ebk.sort('system:index', False).first()
-
         # 2. AMBIL BOUNDS DARI ASSET
         bounds = heatmap_ebk.geometry().bounds().getInfo()
         coords = bounds['coordinates'][0]
