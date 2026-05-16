@@ -42,6 +42,13 @@ if tgl_awal and tgl_akhir and not df.empty:
 # 4. TAMPILKAN HEADER METRIK
 ui_component.render_header_and_metrics(df)
 
+# Tulis ini sementara untuk cek error
+st.write(f"Apakah data kosong?: {df.empty}")
+st.write(f"Apakah GEE siap?: {gee_ready}")
+
+# 5. KONTEN UTAMA
+if menu_pilihan == "🟢 Dashboard Peta":
+...
 # 5. KONTEN UTAMA
 if menu_pilihan == "🟢 Dashboard Peta":
     st.markdown('<div class="peta-container">', unsafe_allow_html=True)
