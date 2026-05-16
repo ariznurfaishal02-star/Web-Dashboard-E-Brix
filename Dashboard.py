@@ -48,9 +48,6 @@ st.write(f"Apakah GEE siap?: {gee_ready}")
 
 # 5. KONTEN UTAMA
 if menu_pilihan == "🟢 Dashboard Peta":
-...
-# 5. KONTEN UTAMA
-if menu_pilihan == "🟢 Dashboard Peta":
     st.markdown('<div class="peta-container">', unsafe_allow_html=True)
     
     st.subheader("🗺️ Peta Kemanisan Tebu")
