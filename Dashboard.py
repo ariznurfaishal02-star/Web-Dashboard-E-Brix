@@ -1,6 +1,7 @@
 import streamlit as st
 import os
 import ee
+import json
 from streamlit_folium import st_folium
 
 # Import modul terpisah
@@ -8,14 +9,9 @@ from data_loader import load_data
 from map_generator import create_ebrix_map
 import ui_component
 
-# 1. INISIALISASI & CONFIG
-try:
-    ee.Initialize(project='fabled-archive-491907-g3')
-    gee_ready = True
-except Exception:
-    gee_ready = False
-
+# set page config harus di atas atau awal
 st.set_page_config(page_title="E-BRIX Dashboard", page_icon="🍃", layout="wide")
+
 
 # CSS Loader
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -23,32 +19,58 @@ try:
     with open(os.path.join(current_dir, "assets/style.css")) as f:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 except Exception:
-    st.warning("⚠️ File style.css tidak ada.")
+    st.warning("⚠️ File style.css tidak ditemukan.")
 
-# 2. LOAD DATA
+
+# INISIALISASI GEE 
+try:
+    # Jika berjalan di Streamlit Cloud (Mendeteksi adanya st.secrets)
+    if "gee" in st.secrets:
+        credentials = ee.ServiceAccountCredentials(
+            email=json.loads(st.secrets["gee"]["json"])["client_email"],
+            key_data=st.secrets["gee"]["json"]
+        )
+        ee.Initialize(credentials=credentials, project='fabled-archive-491907-g3')
+    
+    # Jika berjalan di Laptop/Lokal (Tidak ada st.secrets)
+    else:
+        ee.Initialize(project='fabled-archive-491907-g3')
+        
+    gee_ready = True
+except Exception as e:
+    gee_ready = False
+    st.sidebar.error(f"❌ GEE Gagal Terhubung: {e}")
+
+
+# 4. LOAD DATA & FILTERING
 df_raw = load_data()
 
-# 3. SIDEBAR & FILTERING
 with st.sidebar:
     menu_pilihan, blok_dipilih, tgl_awal, tgl_akhir = ui_component.render_sidebar(df_raw)
 
 # Terapkan Filter
 df = df_raw.copy()
-if len(blok_dipilih) > 0: 
+if len(blok_dipilih) > 0:
     df = df[df['Kode_Blok'].isin(blok_dipilih)]
 if tgl_awal and tgl_akhir and not df.empty:
     df = df[(df['Tanggal'].dt.date >= tgl_awal) & (df['Tanggal'].dt.date <= tgl_akhir)]
 
-# 4. TAMPILKAN HEADER METRIK
+
+
+# 5. HEADER & METRIK
 ui_component.render_header_and_metrics(df)
 
-# 5. KONTEN UTAMA
+
+
+# 6. KONTEN UTAMA
 if menu_pilihan == "🟢 Dashboard Peta":
-    st.markdown('<div class="peta-container">', unsafe_allow_html=True)
     
+    # Bungkus peta dengan kotak CSS kustom
+    st.markdown('<div class="peta-container">', unsafe_allow_html=True)
     st.subheader("🗺️ Peta Kemanisan Tebu")
+    
     if df.empty or not gee_ready:
-        st.warning("Data tidak tersedia atau GEE belum siap.")
+        st.warning("⚠️ Data tidak tersedia atau Google Earth Engine belum siap.")
     else:
         map_obj, error_msg = create_ebrix_map(df)
         if error_msg:
@@ -56,6 +78,7 @@ if menu_pilihan == "🟢 Dashboard Peta":
         else:
             st_folium(map_obj, use_container_width=True, height=590, returned_objects=[])
             
+    # Tutup bungkus kotak peta
     st.markdown('</div>', unsafe_allow_html=True)
 
 elif menu_pilihan == "📊 Analisis Data":
