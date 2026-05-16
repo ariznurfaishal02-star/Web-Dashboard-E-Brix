@@ -46,18 +46,23 @@ if tgl_awal and tgl_akhir and not df.empty:
 # 6. HEADER & METRIK
 ui_component.render_header_and_metrics(df)
 
-# 7. KONTEN UTAMA
+# 5. KONTEN UTAMA
 if menu_pilihan == "🟢 Dashboard Peta":
-    with st.container(border=True):
-        st.subheader("🗺️ Peta Kemanisan Tebu")
-        if df.empty or not gee_ready:
-            st.warning("Data tidak tersedia atau GEE belum siap.")
+    
+    # HAPUS BARIS INI: with st.container(border=True):
+    # GANTI DENGAN HTML INI:
+    st.markdown('<div class="peta-container">', unsafe_allow_html=True)
+    
+    st.subheader("🗺️ Peta Kemanisan Tebu")
+    if df.empty or not gee_ready:
+        st.warning("Data tidak tersedia atau GEE belum siap.")
+    else:
+        map_obj, error_msg = create_ebrix_map(df)
+        if error_msg:
+            st.error(f"Gagal memuat peta: {error_msg}")
         else:
-            map_obj, error_msg = create_ebrix_map(df)
-            if error_msg:
-                st.error(f"Gagal memuat peta: {error_msg}")
-            else:
-                st_folium(map_obj, use_container_width=True, height=590, returned_objects=[])
+            st_folium(map_obj, use_container_width=True, height=590, returned_objects=[])
+    st.markdown('</div>', unsafe_allow_html=True)
 
 elif menu_pilihan == "📊 Analisis Data":
     ui_component.render_analysis_charts(df)
