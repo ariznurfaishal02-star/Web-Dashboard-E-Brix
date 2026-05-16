@@ -8,19 +8,40 @@ def create_ebrix_map(df):
     error_msg = None
 
     try:
-        # 1. AMBIL ASET DARI GEE
+        # 1. AMBIL ASET DARI GEE 
         heatmap_ebk = (ee.ImageCollection("projects/fabled-archive-491907-g3/assets/Heatmap_brix")
                .sort('system:time_start', False)
                .first()
                .resample('bilinear'))
-        
-        # 2. AMBIL BOUNDS DARI ASSET
+               
+        # 2. AMBIL BOUNDS DARI ASSET 
         bounds = heatmap_ebk.geometry().bounds().getInfo()
         coords = bounds['coordinates'][0]
         lats = [c[1] for c in coords]
         lons = [c[0] for c in coords]
         center_lat = (min(lats) + max(lats)) / 2
         center_lon = (min(lons) + max(lons)) / 2
+
+        # =======================================================
+        # FITUR INTERAKTIF: POTONG MAP JIKA USER MEMILIH BLOK
+        # =======================================================
+        # Kita taruh di sini agar tidak mengganggu perhitungan koordinat di atas
+        if 'kunci_blok' in st.session_state and st.session_state['kunci_blok']:
+            blok_terpilih = st.session_state['kunci_blok']
+            try:
+                # Panggil asset GeoJSON pembatas lahan yang kamu upload ke GEE
+                batas_blok_gee = ee.FeatureCollection("projects/fabled-archive-491907-g3/assets/Batas_Blok_Ebrix")
+                
+                # Filter area berdasarkan nama blok yang dipilih user
+                zona_pilihan = batas_blok_gee.filter(ee.Filter.inList('Kode_Blok', ee.List(blok_terpilih)))
+                
+                # Potong gambar heatmap-nya sesuai zona pilihan
+                heatmap_ebk = heatmap_ebk.clip(zona_pilihan)
+            except Exception as clip_err:
+                # Jika file GeoJSON belum di-upload/tidak ditemukan di GEE, 
+                # kode akan mengabaikan pemotongan sehingga peta tetap muncul utuh tanpa crash
+                pass
+        # =======================================================
 
         # 3. PETA DASAR
         m = folium.Map(location=[center_lat, center_lon], zoom_start=14)
